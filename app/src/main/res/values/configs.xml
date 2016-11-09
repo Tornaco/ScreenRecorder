@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="preview_sizes">
+        <item>@string/preview_size_s</item>
+        <item>@string/preview_size_n</item>
+        <item>@string/preview_size_l</item>
+    </string-array>
+</resources>

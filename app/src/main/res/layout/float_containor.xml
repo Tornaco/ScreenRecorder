@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dev.nick.app.screencast.camera.AudioFadeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@color/preview_bg_light"
+    android:elevation="@dimen/float_container_elevation"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/float_container_margin_small"
+    android:paddingEnd="@dimen/float_container_margin_small"
+    android:paddingStart="@dimen/float_container_margin_small">
+
+    <View
+        android:id="@+id/slot"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/float_container_margin" />
+
+</dev.nick.app.screencast.camera.AudioFadeLayout>
