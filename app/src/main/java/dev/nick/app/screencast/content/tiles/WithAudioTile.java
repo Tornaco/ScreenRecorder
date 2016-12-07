@@ -6,10 +6,11 @@ import android.widget.RelativeLayout;
 
 import dev.nick.app.screencast.R;
 import dev.nick.app.screencast.provider.SettingsProvider;
+import dev.nick.tiles.tile.QuickTile;
 import dev.nick.tiles.tile.SwitchTileView;
 import dev.nick.tiles.tile.TileListener;
 
-class WithAudioTile extends SwitchCameraTile {
+class WithAudioTile extends QuickTile {
     WithAudioTile(@NonNull Context context, TileListener listener) {
         super(context, listener);
         this.iconRes = R.drawable.ic_mic_black_24dp;
@@ -28,6 +29,5 @@ class WithAudioTile extends SwitchCameraTile {
             }
         };
         this.titleRes = R.string.title_with_audio;
-        this.summaryRes = R.string.summary_audio;
     }
 }

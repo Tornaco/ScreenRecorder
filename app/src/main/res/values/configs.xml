@@ -5,4 +5,15 @@
         <item>@string/preview_size_n</item>
         <item>@string/preview_size_l</item>
     </string-array>
+
+    <string-array name="audio_source">
+        <item>@string/audio_source_mic</item>
+        <item>@string/audio_source_submix</item>
+    </string-array>
+
+    <string-array name="orientations">
+        <item>@string/orientation_a</item>
+        <item>@string/orientation_p</item>
+        <item>@string/orientation_l</item>
+    </string-array>
 </resources>

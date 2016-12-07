@@ -16,13 +16,11 @@
 
 package dev.nick.tiles.widget;
 
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.os.Build;
+import android.support.v7.widget.SwitchCompat;
 import android.util.AttributeSet;
-import android.widget.Switch;
 
-public class ToggleSwitch extends Switch {
+public class ToggleSwitch extends SwitchCompat {
 
     private OnBeforeCheckedChangeListener mOnBeforeListener;
 
@@ -36,11 +34,6 @@ public class ToggleSwitch extends Switch {
 
     public ToggleSwitch(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public ToggleSwitch(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
     }
 
     public void setOnBeforeCheckedChangeListener(OnBeforeCheckedChangeListener listener) {
@@ -60,7 +53,7 @@ public class ToggleSwitch extends Switch {
         super.setChecked(checked);
     }
 
-    public static interface OnBeforeCheckedChangeListener {
-        public boolean onBeforeCheckedChanged(ToggleSwitch toggleSwitch, boolean checked);
+    public interface OnBeforeCheckedChangeListener {
+        boolean onBeforeCheckedChanged(ToggleSwitch toggleSwitch, boolean checked);
     }
 }

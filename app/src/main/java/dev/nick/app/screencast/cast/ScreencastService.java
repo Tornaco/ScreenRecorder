@@ -16,6 +16,7 @@
 
 package dev.nick.app.screencast.cast;
 
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -25,16 +26,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Point;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.media.projection.MediaProjection;
-import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
 import android.os.StatFs;
 import android.os.SystemClock;
+import android.os.Vibrator;
 import android.text.format.DateUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -49,27 +59,34 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import dev.nick.app.screencast.R;
+import dev.nick.app.screencast.camera.CameraPreviewServiceProxy;
 import dev.nick.app.screencast.camera.ThreadUtil;
 import dev.nick.app.screencast.provider.SettingsProvider;
 import dev.nick.app.screencast.tools.MediaTools;
 import dev.nick.logger.Logger;
 import dev.nick.logger.LoggerManager;
 
-public class ScreencastService extends Service implements IScreencaster {
+@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+public class ScreencastService extends Service implements IScreencaster, Handler.Callback {
 
     public static final String SCREENCASTER_NAME = "hidden:screen-recording";
     private static final String ACTION_STOP_SCREENCAST = "stop.recording";
-
+    private static final String TAG = "TestSensorActivity";
+    private static final int SENSOR_SHAKE = 10;
     private final List<ICastWatcher> mWatchers = new ArrayList<>();
     RecordingDevice mRecorder;
     boolean mIsCasting;
     ServiceBinder mBinder;
+
+    Handler sensorEventHandler;
+
     private MediaProjection mProjection;
     private long startTime;
     private Timer timer;
     private Notification.Builder mBuilder;
     private Logger mLogger;
-
+    private SoundPool mSoundPool;
+    private int mStartSound, mStopSound;
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -78,7 +95,31 @@ public class ScreencastService extends Service implements IScreencaster {
                     intent.getAction().equals(Intent.ACTION_SHUTDOWN)) {
                 mLogger.info("onReceive:" + intent.getAction());
                 stop();
+                CameraPreviewServiceProxy.hide(context);
             }
+        }
+    };
+    private SensorManager sensorManager;
+    private Vibrator vibrator;
+    private SensorEventListener sensorEventListener = new SensorEventListener() {
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            float[] values = event.values;
+            float x = values[0];
+            float y = values[1];
+            float z = values[2];
+            int medumValue = 19;
+            if (Math.abs(x) > medumValue || Math.abs(y) > medumValue || Math.abs(z) > medumValue) {
+                Message msg = new Message();
+                msg.what = SENSOR_SHAKE;
+                sensorEventHandler.sendMessage(msg);
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
         }
     };
 
@@ -87,6 +128,7 @@ public class ScreencastService extends Service implements IScreencaster {
         if (mBinder == null) mBinder = new ServiceBinder();
         return mBinder;
     }
+
 
     void cleanup() {
         String recorderPath = null;
@@ -107,9 +149,32 @@ public class ScreencastService extends Service implements IScreencaster {
             mProjection.stop();
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onCreate() {
         mLogger = LoggerManager.getLogger(getClass());
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            mLogger.error("Bad android version.");
+            return;
+        }
+
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+
+        sensorEventHandler = new Handler(this);
+
+        sensorManager.registerListener(sensorEventListener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+
+        mSoundPool = new SoundPool.Builder()
+                .setMaxStreams(1)
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                        .build())
+                .build();
+        mStopSound = mSoundPool.load(this, R.raw.video_stop, 1);
+        mStartSound = mSoundPool.load(this, R.raw.video_record, 1);
         stopCasting();
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_USER_BACKGROUND);
@@ -123,6 +188,11 @@ public class ScreencastService extends Service implements IScreencaster {
     public void onDestroy() {
         stopCasting();
         unregisterReceiver(mBroadcastReceiver);
+        mSoundPool.release();
+        mSoundPool = null;
+        if (sensorManager != null) {
+            sensorManager.unregisterListener(sensorEventListener);
+        }
         super.onDestroy();
     }
 
@@ -156,6 +226,24 @@ public class ScreencastService extends Service implements IScreencaster {
                 display.getSize(ret);
             }
         }
+
+        // Find user preferred one.
+        boolean landscape = SettingsProvider.get().orientation() == Orientations.L;
+        int width, height;
+        int preferredResIndex = SettingsProvider.get().resolutionIndex();
+        if (preferredResIndex != ValidResolutions.INDEX_MASK_AUTO) {
+            int[] resolution = ValidResolutions.$[preferredResIndex];
+            if (landscape) {
+                width = resolution[0];
+                height = resolution[1];
+            } else {
+                height = resolution[0];
+                width = resolution[1];
+            }
+            ret.x = width;
+            ret.y = height;
+        }
+
         return ret;
     }
 
@@ -172,14 +260,18 @@ public class ScreencastService extends Service implements IScreencaster {
         mRecorder.setProjection(mProjection);
         VirtualDisplay vd = mRecorder.registerVirtualDisplay(this,
                 SCREENCASTER_NAME, size.x, size.y, metrics.densityDpi);
-        if (vd == null)
+        if (vd == null) {
             cleanup();
+        }
     }
 
     private void stopCasting() {
         cleanup();
         if (!hasAvailableSpace()) {
             Toast.makeText(this, R.string.insufficient_storage, Toast.LENGTH_LONG).show();
+        }
+        if (mIsCasting && SettingsProvider.get().soundEffect()) {
+            mSoundPool.play(mStopSound, 1.0f, 1.0f, 0, 0, 1.0f);
         }
         mIsCasting = false;
         notifyUncasting();
@@ -195,6 +287,7 @@ public class ScreencastService extends Service implements IScreencaster {
         return START_STICKY;
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private Notification.Builder createNotificationBuilder() {
         Notification.Builder builder = new Notification.Builder(this)
                 .setOngoing(true)
@@ -207,6 +300,7 @@ public class ScreencastService extends Service implements IScreencaster {
         return builder;
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void sendShareNotification(String recordingFilePath) {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -215,21 +309,16 @@ public class ScreencastService extends Service implements IScreencaster {
         notificationManager.notify(0, mBuilder.build());
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private Notification.Builder createShareNotificationBuilder(String file) {
-        Intent sharingIntent = new Intent(Intent.ACTION_SEND);
-        sharingIntent.setType("video/mp4");
-        Uri uri = MediaTools.getImageContentUri(this, new File(file));
-        sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
-        sharingIntent.putExtra(Intent.EXTRA_SUBJECT, new File(file).getName());
+        Intent sharingIntent = MediaTools.buildSharedIntent(this, new File(file));
         Intent chooserIntent = Intent.createChooser(sharingIntent, null);
         chooserIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         long timeElapsed = SystemClock.elapsedRealtime() - startTime;
 
-        mLogger.debug("Video complete: " + uri);
+        mLogger.debug("Video complete: " + file);
 
-        Intent open = new Intent(Intent.ACTION_VIEW);
-        open.setDataAndType(uri, "video/mp4");
-        open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent open = MediaTools.buildOpenIntent(this, new File(file));
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this, 0, open, PendingIntent.FLAG_CANCEL_CURRENT);
 
@@ -262,15 +351,24 @@ public class ScreencastService extends Service implements IScreencaster {
     boolean startInternal(MediaProjection projection, boolean withAudio) {
         mLogger.debug("start");
         mProjection = projection;
+
         try {
+
             if (!hasAvailableSpace()) {
                 Toast.makeText(this, R.string.not_enough_storage, Toast.LENGTH_LONG).show();
                 return false;
             }
+
             mIsCasting = true;
             notifyCasting();
             startTime = SystemClock.elapsedRealtime();
+
             registerScreencaster(withAudio);
+
+            if (SettingsProvider.get().soundEffect()) {
+                mSoundPool.play(mStartSound, 1.0f, 1.0f, 0, 0, 1.0f);
+            }
+
             mBuilder = createNotificationBuilder();
 
             timer = new Timer();
@@ -289,7 +387,7 @@ public class ScreencastService extends Service implements IScreencaster {
 
     @Override
     public void stop() {
-        mLogger.debug("stop" + Log.getStackTraceString(new Throwable()));
+        mLogger.debug("stop");
         stopCasting();
     }
 
@@ -300,10 +398,12 @@ public class ScreencastService extends Service implements IScreencaster {
 
     private void notifyCasting() {
         synchronized (mWatchers) {
+            final List<ICastWatcher> tmp = new ArrayList<>(mWatchers.size());
+            tmp.addAll(mWatchers);
             ThreadUtil.getMainThreadHandler().post(new Runnable() {
                 @Override
                 public void run() {
-                    for (ICastWatcher w : mWatchers) {
+                    for (ICastWatcher w : tmp) {
                         w.onStartCasting();
                     }
                 }
@@ -313,10 +413,12 @@ public class ScreencastService extends Service implements IScreencaster {
 
     private void notifyUncasting() {
         synchronized (mWatchers) {
+            final List<ICastWatcher> tmp = new ArrayList<>(mWatchers.size());
+            tmp.addAll(mWatchers);
             ThreadUtil.getMainThreadHandler().post(new Runnable() {
                 @Override
                 public void run() {
-                    for (ICastWatcher w : mWatchers) {
+                    for (ICastWatcher w : tmp) {
                         w.onStopCasting();
                     }
                 }
@@ -352,6 +454,22 @@ public class ScreencastService extends Service implements IScreencaster {
                 }
             }
         });
+    }
+
+    @Override
+    public boolean handleMessage(Message msg) {
+        switch (msg.what) {
+            case SENSOR_SHAKE:
+                mLogger.debug("Shaking!");
+                boolean shouldHandle = SettingsProvider.get().shakeAction();
+                if (!shouldHandle) return true;
+                if (mIsCasting) {
+                    vibrator.vibrate(100);
+                    stop();
+                }
+                return true;
+        }
+        return false;
     }
 
     class ServiceBinder extends Binder implements IScreencaster {

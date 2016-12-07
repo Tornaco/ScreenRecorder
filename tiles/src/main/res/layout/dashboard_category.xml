@@ -44,15 +44,32 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <TextView
-        android:id="@+id/category_summary"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:paddingBottom="@dimen/dashboard_category_title_margin_start"
-        android:paddingLeft="@dimen/dashboard_category_title_margin_start"
-        android:paddingRight="@dimen/dashboard_category_title_margin_start"
-        android:paddingTop="@dimen/dashboard_category_title_margin_start"
-        android:textAppearance="@style/TextAppearance.Small" />
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/category_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:gravity="center_vertical"
+            android:paddingBottom="@dimen/dashboard_category_title_margin_start"
+            android:paddingLeft="@dimen/dashboard_category_title_margin_start"
+            android:paddingRight="@dimen/dashboard_category_title_margin_start"
+            android:paddingTop="@dimen/dashboard_category_title_margin_start"
+            android:textAppearance="@style/TextAppearance.Small" />
+
+        <Button
+            android:id="@+id/btn_got"
+            style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"
+            android:textStyle="italic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/category_summary"
+            android:text="@string/got_it" />
+    </RelativeLayout>
 
 </LinearLayout>

@@ -16,6 +16,7 @@
 
 package dev.nick.app.screencast.cast;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -24,8 +25,8 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.projection.MediaProjection;
+import android.os.Build;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Surface;
 
 import org.xml.sax.Attributes;
@@ -38,53 +39,55 @@ import java.util.ArrayList;
 
 import dev.nick.app.screencast.R;
 import dev.nick.app.screencast.provider.SettingsProvider;
+import dev.nick.logger.Logger;
 import dev.nick.logger.LoggerManager;
 import safesax.Element;
 import safesax.ElementListener;
 import safesax.Parsers;
 import safesax.RootElement;
 
-public abstract class EncoderDevice {
+@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+abstract class EncoderDevice {
 
-    final String LOGTAG = getClass().getSimpleName();
-    MediaProjection projection;
-    int width;
-    int height;
     Context context;
+    private MediaProjection projection;
+    private int width;
+    private int height;
     private MediaCodec venc;
     private VirtualDisplay virtualDisplay;
     // Standard resolution tables, removed values that aren't multiples of 8
     private int validResolutions[][] = ValidResolutions.$;
 
-    public EncoderDevice(Context context, int width, int height) {
+    private Logger logger;
+
+    EncoderDevice(Context context, int width, int height) {
         this.context = context;
         this.width = width;
         this.height = height;
+        this.logger = LoggerManager.getLogger(getClass());
     }
 
-    public void setProjection(MediaProjection projection) {
+    void setProjection(MediaProjection projection) {
         this.projection = projection;
     }
 
-    public VirtualDisplay registerVirtualDisplay(Context context, String name, int originalWidth,
-                                                 int originalHeight, int densityDpi) {
+    VirtualDisplay registerVirtualDisplay(Context context, String name, int originalWidth,
+                                          int originalHeight, int densityDpi) {
         assert virtualDisplay == null;
-        DisplayManager dm = (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
         Surface surface = createDisplaySurface();
         if (surface == null)
             return null;
-        return projection.createVirtualDisplay("ScreenSharing",
+        return projection.createVirtualDisplay(name,
                 width, height, 1,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 surface, null /*Callbacks*/, null /*Handler*/);
-        //  return virtualDisplay = dm.createVirtualDisplay(name, width, height, 1, surface, DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC | DisplayManager.VIRTUAL_DISPLAY_FLAG_SECURE);
     }
 
     public void stop() {
         if (venc != null) {
             try {
                 venc.signalEndOfInputStream();
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
             venc = null;
         }
@@ -117,7 +120,7 @@ public abstract class EncoderDevice {
 
     protected abstract EncoderRunnable onSurfaceCreated(MediaCodec venc);
 
-    public final Surface createDisplaySurface() {
+    private Surface createDisplaySurface() {
         if (venc != null) {
             // signal any old crap to end
             try {
@@ -182,15 +185,10 @@ public abstract class EncoderDevice {
         int resConstraint = context.getResources().getInteger(
                 R.integer.config_maxDimension);
 
-        double ratio = 1;
-        boolean landscape = false;
+        double ratio;
         boolean resizeNeeded = false;
-
-        // see if we need to resize
-        float scaleFac = SettingsProvider.get().resolutionScaleFactor();
-        width = (int) (width * scaleFac);
-        height = (int) (height * scaleFac);
-        LoggerManager.getLogger(getClass()).info("Using size:w-h:" + width + "-" + height);
+        int orientation = SettingsProvider.get().orientation();
+        boolean landscape = orientation == Orientations.L;
 
         // Figure orientation and ratio first
         if (width > height) {
@@ -252,11 +250,11 @@ public abstract class EncoderDevice {
         video.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 3);
 
         // create a surface from the encoder
-        Log.i(LOGTAG, "Starting encoder at " + width + "x" + height);
+        logger.debug("Starting encoder at " + width + "x" + height);
         try {
             venc = MediaCodec.createEncoderByType("video/avc");
         } catch (IOException e) {
-            Log.wtf(LOGTAG, "Can't create AVC encoder!", e);
+            logger.trace("Can't create AVC encoder!", e);
         }
         venc.configure(video, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         Surface surface = venc.createInputSurface();
@@ -298,10 +296,10 @@ public abstract class EncoderDevice {
             try {
                 encode();
             } catch (Exception e) {
-                Log.e(LOGTAG, "Encoder error", e);
+                logger.trace("Encoder error", e);
             }
             cleanup();
-            Log.i(LOGTAG, "=======ENCODING COMPLETE=======");
+            logger.debug("=======ENCODING COMPLETE=======");
         }
     }
 }

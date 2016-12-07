@@ -17,6 +17,7 @@ import dev.nick.tiles.R;
 public class DropDownTileView extends TileView {
 
     Spinner mSpinner;
+    int mSelectedPosition = -1;
 
     public DropDownTileView(Context context) {
         super(context);
@@ -32,7 +33,7 @@ public class DropDownTileView extends TileView {
         mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
-                onDropdownItemSelected(position, true);
+                setSelectedItem(position, true);
             }
 
             @Override
@@ -43,10 +44,18 @@ public class DropDownTileView extends TileView {
 
     }
 
-    public void onDropdownItemSelected(int position, boolean fromSpinner) {
-
+    public void setSelectedItem(int position, boolean fromSpinner) {
+        if (fromSpinner && position == mSelectedPosition) {
+            return;
+        }
+        mSpinner.setSelection(position);
+        mSelectedPosition = mSpinner.getSelectedItemPosition();
+        onItemSelected(position);
     }
 
+    protected void onItemSelected(int position) {
+        // Noop
+    }
 
     @Override
     protected void onBindActionView(RelativeLayout container) {

@@ -18,6 +18,7 @@ package dev.nick.tiles.tile;
 
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -80,6 +81,9 @@ public class Tile {
      * @attr ref android.R.styleable#PreferenceHeader_icon
      */
     public int iconRes;
+
+    public Drawable iconDrawable;
+
     /**
      * Full class name of the fragment to display when this tile is
      * selected.

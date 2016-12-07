@@ -1,5 +1,6 @@
 package dev.nick.app.screencast.content.tiles;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.provider.Settings;
@@ -11,10 +12,11 @@ import dev.nick.app.screencast.R;
 import dev.nick.app.screencast.cast.ScreencastServiceProxy;
 import dev.nick.app.screencast.camera.ThreadUtil;
 import dev.nick.app.screencast.provider.SettingsProvider;
+import dev.nick.tiles.tile.QuickTile;
 import dev.nick.tiles.tile.SwitchTileView;
 import dev.nick.tiles.tile.TileListener;
 
-public class ShowTouchTile extends SwitchCameraTile {
+public class ShowTouchTile extends QuickTile {
 
     boolean mRecording;
 
@@ -62,11 +64,15 @@ public class ShowTouchTile extends SwitchCameraTile {
     }
 
     private void goToSettings() {
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-        getContext().startActivity(intent);
+       try {
+           Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
+           intent.addCategory(Intent.CATEGORY_DEFAULT);
+           intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+           intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+           intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+           getContext().startActivity(intent);
+       } catch (ActivityNotFoundException ignored) {
+           // Nothing.
+       }
     }
 }

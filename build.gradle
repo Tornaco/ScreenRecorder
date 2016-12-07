@@ -16,6 +16,12 @@ allprojects {
     repositories {
         jcenter()
         maven { url "https://jitpack.io" }
+        /**
+         * 在这里加入aar文件夹的repo
+         */
+        flatDir {
+            dirs 'aar'
+        }
     }
 }
 

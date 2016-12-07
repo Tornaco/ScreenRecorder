@@ -51,6 +51,5 @@ public class WithCameraTile extends SwitchCameraTile {
             }
         };
         this.titleRes = R.string.title_with_camera;
-        this.summaryRes = R.string.summary_camera;
     }
 }

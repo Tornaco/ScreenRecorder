@@ -3,6 +3,7 @@ package dev.nick.tiles.tile;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
+import android.text.InputType;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +29,8 @@ public class EditTextTileView extends TileView {
         super.onCreate(context);
         View editTextContainer = LayoutInflater.from(context).inflate(R.layout.dialog_edit_text, null, false);
         mEditText = (EditText) editTextContainer.findViewById(R.id.edit_text);
+        mEditText.setHint(getHint());
+        mEditText.setInputType(getInputType());
         mAlertDialog = new AlertDialog.Builder(context)
                 .setView(editTextContainer)
                 .setTitle(getDialogTitle())
@@ -44,6 +47,14 @@ public class EditTextTileView extends TileView {
                     }
                 })
                 .create();
+    }
+
+    protected int getInputType() {
+        return InputType.TYPE_CLASS_TEXT;
+    }
+
+    protected CharSequence getHint() {
+        return null;
     }
 
     protected EditText getEditText() {

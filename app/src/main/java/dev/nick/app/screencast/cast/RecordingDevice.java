@@ -16,6 +16,7 @@
 
 package dev.nick.app.screencast.cast;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -42,8 +43,9 @@ import dev.nick.app.screencast.R;
 import dev.nick.app.screencast.provider.SettingsProvider;
 
 class RecordingDevice extends EncoderDevice {
+
     private static final String LOGTAG = "RecordingDevice";
-    private static final File RECORDINGS_DIR = new File(Environment.getExternalStorageDirectory().getPath(), SettingsProvider.STORAGE_FOLDER_NAME);
+    private static final File RECORDINGS_DIR = new File(Environment.getExternalStorageDirectory().getPath(), SettingsProvider.STORAGE_MP4_FOLDER_NAME);
     private File path;
     private boolean mRecordAudio;
 
@@ -137,6 +139,7 @@ class RecordingDevice extends EncoderDevice {
         MediaCodec codec;
         MediaFormat format;
 
+        @TargetApi(Build.VERSION_CODES.KITKAT)
         public AudioRecorder(Recorder recorder) {
             try {
                 codec = MediaCodec.createEncoderByType("audio/mp4a-latm");
@@ -159,7 +162,11 @@ class RecordingDevice extends EncoderDevice {
             if (bufferSize < minBufferSize)
                 bufferSize = ((minBufferSize / 1024) + 1) * 1024 * 2;
             Log.i(LOGTAG, "AudioRecorder init");
-            record = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+            int audioSource = SettingsProvider.get().audioSource() == CasterAudioSource.MIC
+                    ? MediaRecorder.AudioSource.MIC
+                    : MediaRecorder.AudioSource.REMOTE_SUBMIX;
+            Log.i(LOGTAG, "Using audio source:" + audioSource);
+            record = new AudioRecord(audioSource, 44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
         }
 
         @Override

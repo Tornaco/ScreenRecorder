@@ -16,7 +16,7 @@ import dev.nick.app.screencast.modle.Video;
 
 public class VideoProvider {
 
-    private static final File RECORDINGS_DIR = new File(Environment.getExternalStorageDirectory().getPath(), SettingsProvider.STORAGE_FOLDER_NAME);
+    private static final File RECORDINGS_DIR = new File(Environment.getExternalStorageDirectory().getPath(), SettingsProvider.STORAGE_MP4_FOLDER_NAME);
 
     private Context context;
 

@@ -6,14 +6,15 @@ import android.widget.RelativeLayout;
 
 import dev.nick.app.screencast.R;
 import dev.nick.app.screencast.provider.SettingsProvider;
+import dev.nick.tiles.tile.QuickTile;
 import dev.nick.tiles.tile.SwitchTileView;
 import dev.nick.tiles.tile.TileListener;
 
-public class AutoHideTile extends SwitchCameraTile {
+public class AutoHideTile extends QuickTile {
 
     public AutoHideTile(@NonNull Context context, TileListener listener) {
         super(context, listener);
-        this.iconRes = R.drawable.ic_cancel_black_24dp;
+        this.iconRes = R.drawable.ic_visibility_off_black_24dp;
         this.tileView = new SwitchTileView(context) {
 
             @Override

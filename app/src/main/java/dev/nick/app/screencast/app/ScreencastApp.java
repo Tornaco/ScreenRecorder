@@ -13,7 +13,7 @@ public class ScreencastApp extends Application {
         super.onCreate();
         registerActivityLifecycleCallbacks(Factory.get());
         Factory.get().onApplicationCreate(this);
-        LoggerManager.setDebugLevel(BuildConfig.DEBUG ? Log.VERBOSE : Log.WARN);
+        LoggerManager.setDebugLevel(BuildConfig.DEBUG ? Log.VERBOSE : Log.ERROR);
         LoggerManager.setTagPrefix(ScreencastApp.class.getSimpleName());
     }
 }

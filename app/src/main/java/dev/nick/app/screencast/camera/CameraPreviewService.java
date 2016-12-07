@@ -14,6 +14,8 @@ import android.view.WindowManager.LayoutParams;
 import android.widget.LinearLayout;
 
 import dev.nick.app.screencast.R;
+import dev.nick.app.screencast.cast.IScreencaster;
+import dev.nick.app.screencast.cast.ScreencastServiceProxy;
 import dev.nick.logger.LoggerManager;
 
 public class CameraPreviewService extends Service {
@@ -62,6 +64,17 @@ public class CameraPreviewService extends Service {
                     return true;
             }
             return false;
+        }
+    };
+    private IScreencaster.ICastWatcher mCastWatcher = new IScreencaster.ICastWatcher() {
+        @Override
+        public void onStartCasting() {
+
+        }
+
+        @Override
+        public void onStopCasting() {
+            hidePreview();
         }
     };
 
@@ -117,10 +130,17 @@ public class CameraPreviewService extends Service {
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        ScreencastServiceProxy.watch(this, mCastWatcher);
+    }
+
+    @Override
     public void onDestroy() {
         if (mFloatView != null) {
             mWindowManager.removeView(mFloatView);
         }
+        ScreencastServiceProxy.watch(this, mCastWatcher);
         super.onDestroy();
     }
 

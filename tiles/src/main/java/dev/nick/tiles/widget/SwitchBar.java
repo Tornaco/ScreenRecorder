@@ -16,10 +16,13 @@
 
 package dev.nick.tiles.widget;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.v7.widget.SwitchCompat;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
@@ -28,7 +31,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -62,6 +64,7 @@ public class SwitchBar extends LinearLayout implements CompoundButton.OnCheckedC
         this(context, attrs, defStyleAttr, 0);
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public SwitchBar(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
 
@@ -88,7 +91,7 @@ public class SwitchBar extends LinearLayout implements CompoundButton.OnCheckedC
 
         addOnSwitchChangeListener(new OnSwitchChangeListener() {
             @Override
-            public void onSwitchChanged(Switch switchView, boolean isChecked) {
+            public void onSwitchChanged(SwitchCompat switchView, boolean isChecked) {
                 setTextViewLabel(isChecked);
             }
         });
@@ -227,7 +230,7 @@ public class SwitchBar extends LinearLayout implements CompoundButton.OnCheckedC
          * @param switchView The Switch view whose state has changed.
          * @param isChecked  The new checked state of switchView.
          */
-        void onSwitchChanged(Switch switchView, boolean isChecked);
+        void onSwitchChanged(SwitchCompat switchView, boolean isChecked);
     }
 
     static class SavedState extends BaseSavedState {

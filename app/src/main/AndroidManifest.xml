@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="dev.nick.app.screencast">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -8,9 +9,9 @@
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
     <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
     <uses-permission android:name="android.permission.CAPTURE_SECURE_VIDEO_OUTPUT" />
-
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -18,13 +19,26 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
+
+    <uses-sdk tools:overrideLibrary="com.github.johnpersano.supertoasts.library" />
 
     <application
         android:name=".app.ScreencastApp"
+        android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme"
-        android:allowBackup="true">
+        android:theme="@style/AppTheme">
+
+        <meta-data
+            android:name="xposedmodule"
+            android:value="true" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="@string/xposed_desc" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="53" />
 
         <meta-data
             android:name="BDAPPID"
@@ -33,46 +47,49 @@
             android:name="BDAPPKEY"
             android:value="4w9zhqeiYE4wWEAnPMpknZOee1nqNiRW" />
 
-        <!--<receiver android:name="com.baidu.appx.app_download.CompleteReceiver">-->
-            <!--<intent-filter>-->
-                <!--<action android:name="android.intent.action.DOWNLOAD_COMPLETE" />-->
-                <!--<action android:name="android.intent.action.DOWNLOAD_NOTIFICATION_CLICKED" />-->
-            <!--</intent-filter>-->
-            <!--<intent-filter>-->
-                <!--<action android:name="android.intent.action.PACKAGE_ADDED" />-->
+        <receiver android:name="com.baidu.appx.app_download.CompleteReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
+                <action android:name="android.intent.action.DOWNLOAD_NOTIFICATION_CLICKED" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
 
-                <!--<data android:scheme="package" />-->
-            <!--</intent-filter>-->
-        <!--</receiver>-->
-        <!--<activity-->
-            <!--android:name="com.baidu.appx.uikit.BDActivity"-->
-            <!--android:configChanges="orientation|screenSize" />-->
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name="com.baidu.appx.uikit.BDActivity"
+            android:configChanges="orientation|screenSize" />
 
         <service
             android:name=".cast.ScreencastService"
             android:exported="false"
             android:label="@string/app_name"
-            android:permission="android.permission.CAPTURE_SECURE_VIDEO_OUTPUT">
-        </service>
+            android:permission="android.permission.CAPTURE_SECURE_VIDEO_OUTPUT" />
 
         <service android:name=".camera.CameraPreviewService" />
 
         <activity
-            android:name=".content.ScreenCastActivity"
+            android:name=".content.BDADActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".content.SettingsActivity"
             android:label="@string/title_settings"
             android:theme="@style/AppTheme.NoActionBar" />
-
+        <activity
+            android:name=".content.DrawerScreencastActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

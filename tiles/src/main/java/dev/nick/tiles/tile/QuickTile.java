@@ -17,7 +17,7 @@ public abstract class QuickTile extends Tile {
         return mContext;
     }
 
-    public TileListener getListener() {
+    TileListener getListener() {
         return mListener;
     }
 

@@ -7,15 +7,18 @@
     <style name="TextAppearance.Switch" parent="TextAppearance.Medium" />
 
     <style name="TextAppearance.CategoryTitle" parent="TextAppearance.Small">
-        <item name="android:textColor">?attr/colorAccent</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
     <style name="TextAppearance.TileTitle" parent="TextAppearance.Medium">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textSize">16sp</item>
     </style>
 
-    <style name="TextAppearance.TileSubTitle" parent="TextAppearance.Small" />
+    <style name="TextAppearance.TileSubTitle" parent="TextAppearance.Small">
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:textSize">13sp</item>
+    </style>
 
     <style name="Material_Dialog" parent="@style/Theme.AppCompat.Light.Dialog">
         <item name="colorPrimary">?attr/colorPrimary</item>
@@ -42,6 +45,11 @@
     <style name="ButtonBar" parent="Theme.AppCompat.Light.Dialog">
         <!-- Used by controls, e.g. CheckBox, ProgressBar, etc. -->
         <item name="colorButtonNormal">?attr/colorAccent</item>
+    </style>
+
+    <style name="ActionArea" parent="Theme.AppCompat.Light">
+        <!-- Used by controls, e.g. CheckBox, ProgressBar, etc. -->
+        <item name="colorAccent">?attr/colorPrimary</item>
     </style>
 
 </resources>

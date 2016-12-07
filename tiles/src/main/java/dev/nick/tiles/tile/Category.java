@@ -20,6 +20,7 @@ import android.content.res.Resources;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -101,6 +102,14 @@ public class Category {
             return res.getText(summaryRes);
         }
         return summary;
+    }
+
+    public void onSummaryViewAttached(TextView view) {
+
+    }
+
+    public void onNoRemindClick() {
+
     }
 
     public int describeContents() {

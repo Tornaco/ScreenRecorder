@@ -6,10 +6,11 @@ import android.widget.RelativeLayout;
 
 import dev.nick.app.screencast.R;
 import dev.nick.app.screencast.provider.SettingsProvider;
+import dev.nick.tiles.tile.QuickTile;
 import dev.nick.tiles.tile.SwitchTileView;
 import dev.nick.tiles.tile.TileListener;
 
-public class DelayTile extends SwitchCameraTile {
+public class DelayTile extends QuickTile {
 
     public DelayTile(@NonNull Context context, TileListener listener) {
         super(context, listener);
@@ -20,12 +21,16 @@ public class DelayTile extends SwitchCameraTile {
             protected void onBindActionView(RelativeLayout container) {
                 super.onBindActionView(container);
                 setChecked(SettingsProvider.get().startDelay() > 0);
+
+                if (isChecked() && SettingsProvider.get().getAppVersionNum() < SettingsProvider.APP_VERSION_INT) {
+                    SettingsProvider.get().setStartDelay(SettingsProvider.START_DELAY_DEFAULT);
+                }
             }
 
             @Override
             protected void onCheckChanged(final boolean checked) {
                 super.onCheckChanged(checked);
-                SettingsProvider.get().setStartDelay(checked ? 1000 : 0);
+                SettingsProvider.get().setStartDelay(checked ? SettingsProvider.START_DELAY_DEFAULT : 0);
             }
         };
         this.titleRes = R.string.title_start_delay;

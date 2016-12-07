@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -26,7 +27,12 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        buildUI(getActivity());
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                buildUI(getActivity());
+            }
+        });
     }
 
     @Override
@@ -52,7 +58,7 @@ public class DashboardFragment extends Fragment {
         // Need an impl.
     }
 
-    private void buildUI(Context context) {
+    protected void buildUI(Context context) {
         if (!isAdded()) {
             throw new IllegalStateException("Fragment not added yet.");
         }
@@ -62,12 +68,12 @@ public class DashboardFragment extends Fragment {
 
         mDashboard.removeAllViews();
 
-        List<Category> categories = getDashboardCategories();
+        final List<Category> categories = getDashboardCategories();
 
         final int count = categories.size();
 
         for (int n = 0; n < count; n++) {
-            Category category = categories.get(n);
+            final Category category = categories.get(n);
 
             View categoryView = mLayoutInflater.inflate(R.layout.dashboard_category, mDashboard,
                     false);
@@ -79,11 +85,24 @@ public class DashboardFragment extends Fragment {
                 categoryLabel.setVisibility(View.GONE);
             }
 
-            TextView categorySummary = (TextView) categoryView.findViewById(R.id.category_summary);
+            final TextView categorySummary = (TextView) categoryView.findViewById(R.id.category_summary);
+            final Button noRemind = (Button) categoryView.findViewById(R.id.btn_got);
+            category.onSummaryViewAttached(categorySummary);
             if (category.getSummary(res) != null) {
                 categorySummary.setText(category.getSummary(res));
+                noRemind.setVisibility(View.VISIBLE);
+                noRemind.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        categorySummary.setVisibility(View.GONE);
+                        noRemind.setVisibility(View.GONE);
+                        category.onNoRemindClick();
+                    }
+                });
+
             } else {
                 categorySummary.setVisibility(View.GONE);
+                noRemind.setVisibility(View.GONE);
             }
 
             ViewGroup categoryContent =
@@ -96,7 +115,6 @@ public class DashboardFragment extends Fragment {
                 updateTileView(context, res, tile, tileView.getImageView(),
                         tileView.getTitleTextView(), tileView.getSummaryTextView());
 
-                tileView.setTile(tile);
                 categoryContent.addView(tileView);
             }
 
@@ -104,6 +122,11 @@ public class DashboardFragment extends Fragment {
             mDashboard.addView(categoryView);
         }
         long delta = System.currentTimeMillis() - start;
+        onUIBuilt();
+    }
+
+    protected void onUIBuilt() {
+        // None
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -111,6 +134,8 @@ public class DashboardFragment extends Fragment {
                                 ImageView tileIcon, TextView tileTextView, TextView statusTextView) {
         if (tile.iconRes > 0) {
             tileIcon.setImageResource(tile.iconRes);
+        } else if (tile.iconDrawable != null) {
+            tileIcon.setImageDrawable(tile.iconDrawable);
         } else {
             tileIcon.setImageDrawable(null);
             tileIcon.setBackground(null);

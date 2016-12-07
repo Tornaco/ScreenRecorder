@@ -19,17 +19,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="1dp"
-    android:layout_marginLeft="1dp"
-    android:layout_marginRight="1dp"
-    android:layout_marginTop="1dp"
+    android:layout_marginBottom="0dp"
+    android:layout_marginLeft="4dp"
+    android:layout_marginRight="4dp"
+    android:layout_marginTop="0dp"
     android:clickable="true"
-    android:foreground="?android:attr/selectableItemBackground"
-    android:padding="8dp"
+    android:padding="2dp"
     app:cardBackgroundColor="@android:color/white"
-    app:cardCornerRadius="1dp"
-    app:cardElevation="1dp"
-    app:cardMaxElevation="3dp"
+    app:cardCornerRadius="0dp"
+    app:cardElevation="0dp"
+    app:cardMaxElevation="0dp"
     app:cardPreventCornerOverlap="true"
     app:cardUseCompatPadding="false"
     app:contentPadding="0dp">
@@ -38,8 +37,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
-        android:paddingBottom="8dp"
-        android:paddingTop="8dp"
         tools:ignore="RtlHardcoded">
 
         <de.hdodenhof.circleimageview.CircleImageView
@@ -86,8 +83,8 @@
             android:text="@string/hint_new"
             android:textAllCaps="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            android:textStyle="bold"
             android:textColor="@android:color/holo_red_dark"
+            android:textStyle="bold"
             android:visibility="invisible" />
 
     </RelativeLayout>

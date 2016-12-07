@@ -18,6 +18,7 @@ package dev.nick.tiles.tile;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -41,8 +42,6 @@ public class TileView extends FrameLayout implements View.OnClickListener {
 
     private int mColSpan = DEFAULT_COL_SPAN;
 
-    private Tile mTile;
-
     public TileView(Context context) {
         this(context, null);
     }
@@ -63,6 +62,8 @@ public class TileView extends FrameLayout implements View.OnClickListener {
 
     protected void onViewInflated(View view) {
         mImageView = (ImageView) view.findViewById(R.id.icon);
+        if (isIconTintEnabled())
+            mImageView.setColorFilter(ContextCompat.getColor(getContext(), R.color.tile_icon_tint));
         mTitleTextView = (TextView) view.findViewById(R.id.title);
         mStatusTextView = (TextView) view.findViewById(R.id.status);
         mDivider = view.findViewById(R.id.tile_divider);
@@ -78,6 +79,8 @@ public class TileView extends FrameLayout implements View.OnClickListener {
     protected void onBindActionView(RelativeLayout container) {
     }
 
+
+
     public TextView getTitleTextView() {
         return mTitleTextView;
     }
@@ -90,9 +93,6 @@ public class TileView extends FrameLayout implements View.OnClickListener {
         return mImageView;
     }
 
-    public void setTile(Tile tile) {
-        mTile = tile;
-    }
 
     public void setDividerVisibility(boolean visible) {
         mDivider.setVisibility(visible ? View.VISIBLE : View.GONE);
@@ -104,6 +104,10 @@ public class TileView extends FrameLayout implements View.OnClickListener {
 
     void setColumnSpan(int span) {
         mColSpan = span;
+    }
+
+    protected boolean isIconTintEnabled() {
+        return true;
     }
 
     @Override

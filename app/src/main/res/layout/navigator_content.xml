@@ -7,9 +7,10 @@
     android:fitsSystemWindows="true"
     tools:context=".content.SettingsActivity">
 
-    <android.support.design.widget.AppBarLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
         android:theme="@style/AppTheme.AppBarOverlay">
 
         <android.support.v7.widget.Toolbar
@@ -17,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            android:elevation="5dp"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 
         <LinearLayout
@@ -27,13 +28,12 @@
             android:layout_alignParentTop="true"
             android:orientation="vertical" />
 
-    </android.support.design.widget.AppBarLayout>
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycler_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+    </LinearLayout>
 
     <RelativeLayout
         android:id="@+id/hint_area"
@@ -72,6 +72,6 @@
         android:layout_margin="@dimen/fab_margin"
         android:src="@drawable/ic_stat_device_access_video"
         android:tint="@color/fab"
-        app:rippleColor="@color/floating_action_button_touch_tint" />
+        app:rippleColor="@color/touch_tint" />
 
 </android.support.design.widget.CoordinatorLayout>

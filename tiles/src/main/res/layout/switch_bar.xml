@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 /*
 ** Copyright 2014, The Android Open Source Project
 **
@@ -27,17 +26,18 @@
         android:layout_weight="1"
         android:ellipsize="end"
         android:maxLines="2"
+        android:gravity="center_vertical"
         android:textAlignment="viewStart"
         android:textAppearance="@style/TextAppearance.Switch"
-        android:textColor="?android:attr/textColorPrimary"/>
+        android:textColor="?android:attr/textColorPrimary" />
 
     <dev.nick.tiles.widget.ToggleSwitch
         android:id="@+id/switch_widget"
+        style="@style/ThemeOverlay.SwitchBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        android:background="@null"
-        android:theme="@style/ThemeOverlay.SwitchBar"/>
+        android:background="@null" />
 
 </merge>
 

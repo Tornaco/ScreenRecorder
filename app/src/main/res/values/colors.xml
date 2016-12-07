@@ -14,9 +14,9 @@
  * limitations under the License.
 -->
 <resources>
-    <color name="primary">#F44336</color>
-    <color name="primary_dark">#D32F2F</color>
-    <color name="primary_light">#FFCDD2</color>
+    <color name="primary">@color/google_blue</color>
+    <color name="primary_dark">@color/google_blue_700</color>
+    <color name="primary_light">@color/google_blue_alpha54</color>
     <color name="accent">#F44336</color>
     <color name="primary_text">#212121</color>
     <color name="secondary_text">#757575</color>
@@ -27,7 +27,13 @@
 
     <color name="preview_bg_light">@color/accent</color>
 
+    <color name="google_blue">#ff4285f4</color>
+    <color name="google_blue_700">#ff3367d6</color>
+    <color name="google_blue_alpha20">#334285f4</color>
+    <color name="google_blue_alpha54">#894285f4</color>
+
+
     <color name="fab">@color/white</color>
     <color name="fab_icon">@color/white</color>
-    <color name="floating_action_button_touch_tint">#9E9E9E</color>
+    <color name="touch_tint">#9E9E9E</color>
 </resources>

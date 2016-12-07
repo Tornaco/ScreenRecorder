@@ -19,6 +19,7 @@ package dev.nick.app.screencast.content;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,6 +29,8 @@ import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.LinearLayoutManager;
@@ -45,20 +48,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.github.johnpersano.supertoasts.library.Style;
+import com.github.johnpersano.supertoasts.library.SuperToast;
+import com.github.johnpersano.supertoasts.library.utils.PaletteUtils;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import dev.nick.app.screencast.cast.IScreencaster;
 import dev.nick.app.screencast.R;
-import dev.nick.app.screencast.cast.ScreencastServiceProxy;
 import dev.nick.app.screencast.camera.CameraPreviewServiceProxy;
 import dev.nick.app.screencast.camera.ThreadUtil;
+import dev.nick.app.screencast.cast.IScreencaster;
+import dev.nick.app.screencast.cast.ScreencastServiceProxy;
 import dev.nick.app.screencast.modle.Video;
 import dev.nick.app.screencast.provider.SettingsProvider;
 import dev.nick.app.screencast.provider.VideoProvider;
 import dev.nick.app.screencast.tools.MediaTools;
+import dev.nick.logger.Logger;
 import dev.nick.logger.LoggerManager;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.OnPermissionDenied;
@@ -69,23 +76,25 @@ import permissions.dispatcher.RuntimePermissions;
 public class ScreenCastActivity extends TransactionSafeActivity {
 
     private static final int PERMISSION_CODE = 1;
+    protected boolean mReadyToRun;
+    protected Logger mLogger;
     private MediaProjection mMediaProjection;
     private MediaProjectionManager mProjectionManager;
-
     private FloatingActionButton mFab;
     private RecyclerView mRecyclerView;
     private Adapter mAdapter;
-
     private boolean mIsCasting;
-    protected boolean mReadyToRun;
+    private ProgressDialog mProgressDialog;
+    private int mRemainingSeconds;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.navigator_content);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+
+        mLogger = LoggerManager.getLogger(getClass());
+
+        setContentView(getContentViewId());
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             new AlertDialog.Builder(ScreenCastActivity.this)
@@ -106,7 +115,27 @@ public class ScreenCastActivity extends TransactionSafeActivity {
         mProjectionManager =
                 (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
+        initUI();
+    }
+
+    protected void initUI() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    mFab.show();
+                } else {
+                    mFab.hide();
+                }
+            }
+        });
+
         mFab = (FloatingActionButton) findViewById(R.id.fab);
 
         mFab.setOnClickListener(new View.OnClickListener() {
@@ -124,9 +153,26 @@ public class ScreenCastActivity extends TransactionSafeActivity {
             }
         });
         showVideoList();
-        if (SettingsProvider.get().firstStart()) {
+        if (SettingsProvider.get().firstStart()
+                || SettingsProvider.get().getAppVersionNum() < SettingsProvider.APP_VERSION_INT) {
             showRetation();
         }
+    }
+
+    protected void showCountdown(String content) {
+        boolean showCD = SettingsProvider.get().showCD();
+        if (showCD) {
+            SuperToast.cancelAllSuperToasts();
+            SuperToast.create(this, content, Style.DURATION_LONG, Style.red())
+                    .setText(content)
+                    .setFrame(Style.FRAME_KITKAT)
+                    .setColor(PaletteUtils.getSolidColor(PaletteUtils.MATERIAL_RED))
+                    .setAnimations(Style.ANIMATIONS_POP).show();
+        }
+    }
+
+    protected int getContentViewId() {
+        return R.layout.navigator_content;
     }
 
     public void showRetation() {
@@ -147,10 +193,10 @@ public class ScreenCastActivity extends TransactionSafeActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        if (!mReadyToRun) return;
         ScreencastServiceProxy.watch(getApplicationContext(), new IScreencaster.ICastWatcher() {
             @Override
             public void onStartCasting() {
+                LoggerManager.getLogger(ScreenCastActivity.class).debug("onStartCasting");
                 refreshState(true);
             }
 
@@ -240,7 +286,39 @@ public class ScreenCastActivity extends TransactionSafeActivity {
                     PERMISSION_CODE);
             return;
         }
+
         ScreencastServiceProxy.start(getApplicationContext(), mMediaProjection, SettingsProvider.get().withAudio());
+
+        if (SettingsProvider.get().startDelay() > 0) {
+            mFab.hide();
+            long delay = SettingsProvider.get().startDelay();
+            mRemainingSeconds = (int) (delay / 1000);
+            showCountdown(String.valueOf(mRemainingSeconds));
+            mRemainingSeconds--;
+            mLogger.debug(mRemainingSeconds);
+            new CountDownTimer(delay, 1000) {
+
+                @Override
+                public void onTick(long l) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mLogger.debug("Tick");
+                            showCountdown(String.valueOf(mRemainingSeconds));
+                            mRemainingSeconds--;
+                        }
+                    });
+                }
+
+                @Override
+                public void onFinish() {
+                    mRemainingSeconds = 0;
+                    SuperToast.cancelAllSuperToasts();
+                    mFab.show();
+                }
+            }.start();
+        }
+
         if (SettingsProvider.get().hideAppWhenStart()) finish();
     }
 
@@ -347,6 +425,8 @@ public class ScreenCastActivity extends TransactionSafeActivity {
 
     private class Adapter extends RecyclerView.Adapter<TwoLinesViewHolder> {
 
+        private final File RECORDINGS_GIF_DIR = new File(Environment.getExternalStorageDirectory().getPath(), SettingsProvider.STORAGE_GIF_FOLDER_NAME);
+
         private final List<Video> data;
 
         public Adapter(List<Video> data) {
@@ -385,22 +465,20 @@ public class ScreenCastActivity extends TransactionSafeActivity {
             holder.title.setText(item.getTitle());
             String descriptionText = item.getDuration();
             holder.description.setText(descriptionText);
-            holder.actionBtn.setVisibility(position == 0 ? View.VISIBLE : View.INVISIBLE);
+            holder.actionBtn.setVisibility(View.INVISIBLE);
             holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @TargetApi(Build.VERSION_CODES.LOLLIPOP_MR1)
                 @Override
                 public void onClick(View view) {
-                    PopupMenu popupMenu = new PopupMenu(getApplicationContext(), holder.actionBtn);
+                    PopupMenu popupMenu = new PopupMenu(ScreenCastActivity.this, holder.actionBtn);
                     popupMenu.inflate(R.menu.actions);
                     popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem menuItem) {
                             switch (menuItem.getItemId()) {
                                 case R.id.action_play:
-                                    Uri playUri = Uri.parse("file://" + item.getPath());
-                                    Intent open = new Intent(Intent.ACTION_VIEW);
-                                    open.setDataAndType(playUri, "video/mp4");
-                                    open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    startActivity(open);
+                                    startActivity(MediaTools.buildOpenIntent(ScreenCastActivity.this,
+                                            new File(item.getPath())));
                                     break;
                                 case R.id.action_remove:
                                     ThreadUtil.getWorkThreadHandler().post(new Runnable() {
@@ -420,12 +498,35 @@ public class ScreenCastActivity extends TransactionSafeActivity {
                                     });
                                     break;
                                 case R.id.action_share:
-                                    Intent sharingIntent = new Intent(Intent.ACTION_SEND);
-                                    sharingIntent.setType("video/mp4");
-                                    Uri uri = MediaTools.getImageContentUri(getApplicationContext(), new File(item.getPath()));
-                                    sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
-                                    startActivity(sharingIntent);
+                                    startActivity(MediaTools.buildSharedIntent(ScreenCastActivity.this,
+                                            new File(item.getPath())));
                                     break;
+//                                case R.id.action_togif:
+//                                    new AsyncTask<Void, Void, Void>() {
+//                                        @Override
+//                                        protected void onPreExecute() {
+//                                            super.onPreExecute();
+//                                            if (mProgressDialog == null) {
+//                                                mProgressDialog = new ProgressDialog(ScreenCastActivity.this);
+//                                                mProgressDialog.setIndeterminate(true);
+//                                                mProgressDialog.setCancelable(false);
+//                                            }
+//                                            mProgressDialog.show();
+//                                        }
+//
+//                                        @Override
+//                                        protected void onPostExecute(Void aVoid) {
+//                                            super.onPostExecute(aVoid);
+//                                            mProgressDialog.dismiss();
+//                                        }
+//
+//                                        @Override
+//                                        protected Void doInBackground(Void... voids) {
+//                                            toGif(item.getPath(), item.getTitle(), RECORDINGS_GIF_DIR.getAbsolutePath());
+//                                            return null;
+//                                        }
+//                                    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//                                    break;
                             }
                             return true;
                         }
@@ -473,5 +574,8 @@ public class ScreenCastActivity extends TransactionSafeActivity {
             alertDialog.show();
         }
 
+        void toGif(String fromFilePath, String fileName, String toDir) {
+
+        }
     }
 }
